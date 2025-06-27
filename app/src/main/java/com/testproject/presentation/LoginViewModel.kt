@@ -6,16 +6,18 @@ import androidx.lifecycle.MutableLiveData
 import com.testproject.data.model.LoginResult
 import com.testproject.domain.LoginInteractor
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.launch
 
 sealed class LoginViewModelState {
-    object Loading: LoginViewModelState()
+    object ShowLoading: LoginViewModelState()
+    object HideLoading: LoginViewModelState()
     object Success : LoginViewModelState()
     data class Error(val message: String) : LoginViewModelState()
 }
 
 @HiltViewModel
-class LoginViewModel(
+class LoginViewModel @Inject constructor(
     val interactor: LoginInteractor
 ): ViewModel() {
 
@@ -23,17 +25,29 @@ class LoginViewModel(
 
     fun login(username: String, password: String) {
 
-        state.value = LoginViewModelState.Loading
+        state.value = LoginViewModelState.ShowLoading
 
         viewModelScope.launch {
-            val result = interactor.login(username, password)
+            try {
+                val result = interactor.login(username, password)
 
-            if (result is LoginResult.Success) {
-                state.value = LoginViewModelState.Success
-            } else if( result is LoginResult.Error) {
-                state.value = LoginViewModelState.Error(result.message)
-            } else {
-                state.value = LoginViewModelState.Error("Login failed")
+                state.value = LoginViewModelState.HideLoading
+                when (result) {
+                    is LoginResult.Success -> {
+                        state.value = LoginViewModelState.Success
+                    }
+
+                    is LoginResult.Error -> {
+                        state.value = LoginViewModelState.Error(result.message)
+                    }
+
+                    else -> {
+                        state.value = LoginViewModelState.Error("Login failed")
+                    }
+                }
+            } catch (e: Exception) {
+                state.value = LoginViewModelState.HideLoading
+                state.value = LoginViewModelState.Error(e.message ?: "An error occurred, please try again")
             }
         }
     }

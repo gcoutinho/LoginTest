@@ -39,6 +39,13 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/gradle/incremental.annotation.processors"
+
+        }
+    }
 }
 
 dependencies {
@@ -46,7 +53,7 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
     implementation("com.google.dagger:hilt-android:2.56.2")
-    implementation("com.google.dagger:hilt-android-compiler:2.56.2")
+    ksp("com.google.dagger:hilt-android-compiler:2.56.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

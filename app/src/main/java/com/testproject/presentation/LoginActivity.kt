@@ -1,15 +1,14 @@
 package com.testproject.presentation
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.testproject.R
 import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 
 @AndroidEntryPoint
 class LoginActivity: AppCompatActivity() {
@@ -18,8 +17,9 @@ class LoginActivity: AppCompatActivity() {
     lateinit var passwordField: EditText
     lateinit var loginButton: Button
 
-    @Inject
-    lateinit var viewModel: LoginViewModel
+    val viewModel: LoginViewModel by viewModels()
+
+    lateinit var loadingDialog: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,9 +32,8 @@ class LoginActivity: AppCompatActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.state.observe(this) { state ->
-            when (state) {
-                is LoginViewModelState.Loading -> {
+        viewModel.state.observe(this) { state -> when (state) {
+                is LoginViewModelState.ShowLoading -> {
                     showLoading()
                 }
                 is LoginViewModelState.Success -> {
@@ -43,7 +42,17 @@ class LoginActivity: AppCompatActivity() {
                 is LoginViewModelState.Error -> {
                     showError(state.message)
                 }
+
+                LoginViewModelState.HideLoading -> {
+                    hideLoading()
+                }
             }
+        }
+    }
+
+    fun hideLoading() {
+        if (::loadingDialog.isInitialized && loadingDialog.isShowing) {
+            loadingDialog.dismiss()
         }
     }
 
@@ -56,7 +65,7 @@ class LoginActivity: AppCompatActivity() {
     }
 
     private fun showLoading() {
-        AlertDialog.Builder(this)
+        loadingDialog = AlertDialog.Builder(this)
             .setTitle("Loading")
             .setMessage("Please wait...")
             .setCancelable(false)
